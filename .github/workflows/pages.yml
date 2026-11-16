@@ -1,0 +1,42 @@
+name: 게임 올리기 (실제 + 테스트)
+
+# main 브랜치 = 실제 게임 주소, test 브랜치 = 테스트 주소(/test/)
+# 둘 중 어느 쪽에 올려도 두 주소가 함께 다시 만들어집니다.
+on:
+  push:
+    branches: [main, test]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: main(실제)과 test(테스트) 받기
+        run: |
+          REPO="https://github.com/${{ github.repository }}.git"
+          git clone --depth 1 --branch main "$REPO" _site
+          if git ls-remote --exit-code --heads "$REPO" test >/dev/null; then
+            git clone --depth 1 --branch test "$REPO" _site/test
+            if [ -f _site/test/index.html ]; then
+              sed -i 's|</body>|<div style="position:fixed;right:12px;bottom:12px;z-index:99;background:#d9483b;color:#fff;font:bold 14px sans-serif;padding:6px 12px;border-radius:8px;pointer-events:none">테스트 버전</div></body>|' _site/test/index.html
+            fi
+          fi
+          rm -rf _site/.git _site/.github _site/test/.git _site/test/.github
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
