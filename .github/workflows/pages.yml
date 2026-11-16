@@ -43,6 +43,8 @@ jobs:
           if git ls-remote --exit-code --heads "$REPO" test >/dev/null; then
             git clone --depth 1 --branch test "$REPO" _site/test
             if [ -f _site/test/index.html ]; then
+              # 테스트 주소는 저장 데이터를 따로 씁니다 (실제 게임 진행을 건드리지 않게)
+              sed -i 's/goguma3d_v1/goguma3d_test/g' _site/test/index.html
               sed -i 's|</body>|<div style="position:fixed;right:12px;bottom:12px;z-index:99;background:#d9483b;color:#fff;font:bold 14px sans-serif;padding:6px 12px;border-radius:8px;pointer-events:none">테스트 버전</div></body>|' _site/test/index.html
             fi
           fi
